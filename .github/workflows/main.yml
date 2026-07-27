@@ -9,10 +9,10 @@ jobs:
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: '3.10'
 
@@ -22,18 +22,23 @@ jobs:
         sudo apt install -y git zip unzip openjdk-17-jdk python3-pip autoconf libtool pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev libffi-dev libssl-dev
         pip install --upgrade "cython<3.0" buildozer
 
-    - name: Rename file to main.py
+    - name: Prepare main.py
       run: |
         if [ -f apk.py ]; then
           mv apk.py main.py
         fi
 
-    - name: Build APK
+    - name: Create buildozer.spec if not exists
       run: |
         if [ ! -f buildozer.spec ]; then
           buildozer init
         fi
-        yes | buildozer -v android debug
+
+    - name: Build APK
+      run: |
+        # پذیرش خودکار لایسنس‌های اندروید و اجرا با پرچم غیرتعاملی
+        export ACCEPT_SDK_LICENSE=1
+        printf 'y\ny\ny\ny\ny\n' | buildozer -v android debug || buildozer -v android debug
 
     - name: Upload APK
       uses: actions/upload-artifact@v4
