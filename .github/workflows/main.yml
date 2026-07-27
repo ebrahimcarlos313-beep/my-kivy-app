@@ -11,6 +11,12 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
 
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
@@ -19,14 +25,14 @@ jobs:
     - name: Install System Dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y git zip unzip openjdk-17-jdk python3-pip autoconf libtool pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev libffi-dev libssl-dev
+        sudo apt-get install -y git zip unzip python3-pip autoconf libtool pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev libffi-dev libssl-dev
 
     - name: Install Buildozer & Cython
       run: |
         pip install --upgrade pip
         pip install "cython<3.0" buildozer kivy
 
-    - name: Prepare Files & Fix Spec
+    - name: Prepare Files
       run: |
         if [ -f apk.py ]; then
           mv apk.py main.py
@@ -34,11 +40,12 @@ jobs:
         if [ ! -f buildozer.spec ]; then
           buildozer init
         fi
-        # تنظیم نسخه پایتون و کیوی در فایل buildozer.spec برای جلوگیری از خطای پایتون 3.14
-        sed -i 's/^requirements =.*/requirements = python3==3.11.0,kivy/g' buildozer.spec
+        # تنظیم نسخه پایتون و کیوی در buildozer.spec
+        sed -i 's/^requirements =.*/requirements = python3,kivy/g' buildozer.spec
 
-    - name: Build APK
+    - name: Build APK with Buildozer
       run: |
+        export ACCEPT_SDK_LICENSE=1
         yes | buildozer -v android debug
 
     - name: Upload APK
