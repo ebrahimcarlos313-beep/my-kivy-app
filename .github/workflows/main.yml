@@ -26,21 +26,19 @@ jobs:
         pip install --upgrade pip
         pip install "cython<3.0" buildozer
 
-    - name: Prepare main.py
+    - name: Prepare main.py & buildozer.spec
       run: |
         if [ -f apk.py ]; then
           mv apk.py main.py
         fi
-
-    - name: Generate buildozer.spec
-      run: |
         if [ ! -f buildozer.spec ]; then
           buildozer init
         fi
 
-    - name: Build APK
+    - name: Build APK with Buildozer
       run: |
-        yes | buildozer android debug || true
+        export ACCEPT_SDK_LICENSE=1
+        yes | buildozer -v android debug
 
     - name: Upload APK
       uses: actions/upload-artifact@v4
