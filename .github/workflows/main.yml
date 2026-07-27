@@ -1,55 +1,82 @@
-name: Build Android APK
+from kivy.app import App
+from kivy.uix.boxlayout import BoxLayout
+from kivy.lang import Builder
 
-on:
-  workflow_dispatch:
+# طراحی رابط کاربری با زبان Kivy (.kv)
+# این بخش ظاهر برنامه را به صورت متنی توصیف می‌کند.
+kv_design = """
+<MainUI>:
+    orientation: 'vertical'
+    padding: dp(20)
+    spacing: dp(20)
+    
+    # تنظیم رنگ پس‌زمینه اصلی (رنگ آبی-خاکستری روشن)
+    canvas.before:
+        Color:
+            rgba: 0.95, 0.96, 0.98, 1
+        Rectangle:
+            pos: self.pos
+            size: self.size
 
-jobs:
-  build:
-    runs-on: ubuntu-22.04
+    # کادر بالا برای متن (لیبل)
+    BoxLayout:
+        size_hint_y: 0.6
+        padding: dp(20)
+        
+        Label:
+            text: "تبریک! شما اولین اپ پایتونی\\nخود را زیبا کردید!"
+            font_size: '22sp'
+            halign: 'center'
+            valign: 'middle'
+            color: 0.1, 0.1, 0.2, 1  # رنگ متن تیره
+            # bold: True  # اگر فونت فارسی دارید، بهتر است از فونت استفاده کنید تا बोल्ड
+            text_size: self.width, None
 
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
+    # کادر پایین برای دکمه
+    AnchorLayout:
+        size_hint_y: 0.4
+        anchor_x: 'center'
+        anchor_y: 'center'
 
-    - name: Set up JDK 17
-      uses: actions/setup-java@v4
-      with:
-        distribution: 'temurin'
-        java-version: '17'
+        # دکمه با لبه‌های گرد و رنگی
+        Button:
+            text: "پایان عالی این مرحله"
+            size_hint: None, None
+            size: dp(200), dp(60)
+            font_size: '18sp'
+            background_color: 0.3, 0.6, 0.9, 0  # رنگ دکمه نامرئی تا رنگ پس‌زمینه (canvas) دیده شود
+            color: 1, 1, 1, 1  # رنگ متن دکمه (سفید)
+            on_release: app.on_button_click()
 
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.11'
+            # رسم لبه‌های گرد و رنگ آبی برای دکمه
+            canvas.before:
+                Color:
+                    rgba: 0.3, 0.6, 0.9, 1  # رنگ آبی روشن دکمه
+                RoundedRectangle:
+                    pos: self.pos
+                    size: self.size
+                    radius: [dp(30),]  # شعاع گردی لبه‌ها
+"""
 
-    - name: Install System Dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y git zip unzip python3-pip autoconf libtool pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev libffi-dev libssl-dev
+# لود کردن طراحی KV
+Builder.load_string(kv_design)
 
-    - name: Install Buildozer & Cython
-      run: |
-        pip install --upgrade pip
-        pip install "cython<3.0" buildozer kivy
+class MainUI(BoxLayout):
+    pass
 
-    - name: Prepare Files
-      run: |
-        if [ -f apk.py ]; then
-          mv apk.py main.py
-        fi
-        if [ ! -f buildozer.spec ]; then
-          buildozer init
-        fi
-        # تنظیم نسخه پایتون و کیوی در buildozer.spec
-        sed -i 's/^requirements =.*/requirements = python3,kivy/g' buildozer.spec
+class BeautifulApp(App):
+    def build(self):
+        # تنظیم عنوان برنامه (در نوار وضعیت اندروید دیده می‌شود)
+        self.title = "اولین اپ زیبای من"
+        return MainUI()
 
-    - name: Build APK with Buildozer
-      run: |
-        export ACCEPT_SDK_LICENSE=1
-        yes | buildozer -v android debug
+    # عملی که هنگام کلیک روی دکمه انجام می‌شود
+    def on_button_click(self):
+        # چاپ متن در کنسول اندروید (برای تست)
+        print("دکمه با موفقیت کلیک شد!")
+        # تغییر متن لیبل (اختیاری - برای افزودن تعامل بیشتر)
+        # برای این کار نیاز به تنظیم id در فایل KV است که فعلاً برای سادگی حذف کردیم.
+        # اما اپ همینطوری هم زیبا شده است.
 
-    - name: Upload APK
-      uses: actions/upload-artifact@v4
-      with:
-        name: package
-        path: bin/*.apk
+if __name__ == '__main__':
+    BeautifulApp().run()
